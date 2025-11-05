@@ -1,4 +1,5 @@
 import requests
+from functions import *
 
 # Setup Sleeper league API settings
 league_id = "1253713259077324800" #Gahanna Keeper
@@ -66,8 +67,8 @@ for user in users:
 for user in users:
     for roster in rosters:
         if roster['owner_id'] == user['user_id']:
-            print(roster['settings']['wins'] * 13)
-            print(user['standings_points'])
+            #print(roster['settings']['wins'] * 13)
+            #print(user['standings_points'])
             user['standings_points'] += roster['settings']['wins'] * 13
 
 standings = {}
@@ -82,3 +83,11 @@ for user in range(12):
     if user == 6:
         print("\nOutside looking in:")
     print(f"{user+1}: {standings[user][0]} - {standings[user][1]} points")
+
+email_body = "Current Weekly Standings:\n\n"
+for user in range(12):
+    if user == 6:
+        email_body += "\nOutside looking in:\n"
+    email_body += f"{user+1}: {standings[user][0]} - {standings[user][1]} points\n"
+
+send_email("Weekly Standings Update", email_body)
