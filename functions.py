@@ -6,7 +6,7 @@ import os
 
 def send_email(subject, body):
     # Create the email
-    load_dotenv()
+    load_dotenv(override=True)
     sender_email = os.getenv("GMAIL_SENDER")
     sender_password = os.getenv("GMAIL_PASSWORD")
 
