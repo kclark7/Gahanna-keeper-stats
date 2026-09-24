@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import os
 
-def send_email(subject, body):
+def send_email(subject, body, html=False):
     # Create the email
     load_dotenv(override=True)
     sender_email = os.getenv("GMAIL_SENDER")
@@ -16,7 +16,7 @@ def send_email(subject, body):
     msg["To"] = sender_email
     msg["Subject"] = subject
 
-    msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(body, "html" if html else "plain"))
 
     try:
         # Connect to Gmail’s SMTP server (use your provider’s server if different)
