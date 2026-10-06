@@ -110,6 +110,7 @@ previous_rankings = {
     for rank, (display_name, _) in enumerate(previous_standings, start=1)
 }
 
+previous_points = dict(previous_standings)
 
 # Build historical rankings from the same Sleeper matchup data so we can detect
 # teams that have moved in the same direction for three consecutive updates.
@@ -218,21 +219,20 @@ def email_ranking_movement(display_name):
         return f'<span style="color:#15803d;font-weight:700;">↑ {places_moved}</span>'
     return f'<span style="color:#b91c1c;font-weight:700;">↓ {places_moved}</span>'
 
-email_body = """
+email_body = f"""
 <html>
 <body style="margin:0;padding:24px;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827;">
   <div style="max-width:680px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-    <div style="padding:24px 24px 16px 24px;">
-      <h2 style="margin:0 0 6px 0;font-size:24px;">Weekly Standings</h2>
-      <p style="margin:0;color:#6b7280;font-size:14px;">Current league standings and movement from the previous update</p>
+    <div style="padding:14px 18px 10px 18px;">
+      <h2 style="margin:0;font-size:21px;">Week {current_week} Standings</h2>
     </div>
     <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;">
       <thead>
         <tr style="background-color:#f9fafb;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">
-          <th style="padding:10px 16px;text-align:center;color:#6b7280;width:56px;">Rank</th>
-          <th style="padding:10px 16px;text-align:left;color:#6b7280;">Team</th>
-          <th style="padding:10px 16px;text-align:center;color:#6b7280;width:90px;">Move</th>
-          <th style="padding:10px 16px;text-align:right;color:#6b7280;width:90px;">Points</th>
+          <th style="padding:7px 12px;text-align:center;color:#6b7280;width:48px;">Rank</th>
+          <th style="padding:7px 12px;text-align:left;color:#6b7280;">Team</th>
+          <th style="padding:7px 10px;text-align:center;color:#6b7280;width:60px;">Move</th>
+          <th style="padding:7px 12px;text-align:right;color:#6b7280;width:125px;white-space:nowrap;">Points</th>
         </tr>
       </thead>
       <tbody>
@@ -242,6 +242,11 @@ for user in range(12):
     rank = user + 1
     display_name = standings[user][0]
     points = standings[user][1]
+    points_gained = points - previous_points.get(display_name, points)
+    points_movement = (
+        f'<span style="color:#15803d;font-weight:700;margin-left:4px;">(+{points_gained:g})</span>'
+        if points_gained > 0 else ""
+    )
     movement = email_ranking_movement(display_name)
     streak = streak_emoji(display_name)
 
@@ -249,7 +254,7 @@ for user in range(12):
     if rank == 1:
         email_body += """
         <tr>
-          <td colspan="4" style="border-top:3px solid #374151;padding:7px 16px 3px 16px;color:#15803d;font-size:11px;font-weight:700;letter-spacing:0.3px;">
+          <td colspan="4" style="border-top:3px solid #374151;padding:4px 12px 2px 12px;color:#15803d;font-size:11px;font-weight:700;letter-spacing:0.3px;">
             PLAYOFF POSITION
           </td>
         </tr>
@@ -257,7 +262,7 @@ for user in range(12):
     elif rank == 7:
         email_body += """
         <tr>
-          <td colspan="4" style="border-top:3px solid #374151;padding:7px 16px 3px 16px;color:#b91c1c;font-size:11px;font-weight:700;letter-spacing:0.3px;">
+          <td colspan="4" style="border-top:3px solid #374151;padding:4px 12px 2px 12px;color:#b91c1c;font-size:11px;font-weight:700;letter-spacing:0.3px;">
             OUTSIDE LOOKING IN
           </td>
         </tr>
@@ -269,17 +274,17 @@ for user in range(12):
 
     email_body += f"""
         <tr style="border-bottom:1px solid #e5e7eb;">
-          <td style="padding:12px 16px;text-align:center;font-weight:700;">{rank}</td>
-          <td style="padding:12px 16px;font-weight:600;">{display_name}{streak}{bye_label}</td>
-          <td style="padding:12px 16px;text-align:center;">{movement}</td>
-          <td style="padding:12px 16px;text-align:right;">{points}</td>
+          <td style="padding:8px 12px;text-align:center;font-weight:700;">{rank}</td>
+          <td style="padding:8px 12px;font-weight:600;">{display_name}{streak}{bye_label}</td>
+          <td style="padding:8px 10px;text-align:center;">{movement}</td>
+          <td style="padding:8px 12px;text-align:right;white-space:nowrap;">{points:g} {points_movement}</td>
         </tr>
 """
 
 email_body += """
       </tbody>
     </table>
-    <div style="padding:14px 24px 20px 24px;color:#6b7280;font-size:12px;">
+    <div style="padding:8px 18px 10px 18px;color:#6b7280;font-size:12px;">
       <span style="color:#15803d;font-weight:700;">↑</span> moved up &nbsp;&nbsp;
       <span style="color:#b91c1c;font-weight:700;">↓</span> moved down
     </div>
@@ -288,6 +293,5 @@ email_body += """
 </html>
 """
 
-# Send first. Only advance the standings snapshot after a successful email send,
-# so a failed email does not accidentally consume this week's movement baseline.
+# Send HTML standings email.
 send_email("Weekly Standings Update", email_body, html=True)
